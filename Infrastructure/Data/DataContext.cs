@@ -1,3 +1,4 @@
+using System.Reflection;
 using Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -17,6 +18,9 @@ namespace Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            // for future entity configurations and validations
+            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());        
 
             builder.Entity<AppUser>()
                 .HasMany(ur => ur.UserRoles)
