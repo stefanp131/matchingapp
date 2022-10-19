@@ -2,7 +2,6 @@ using API.DTOs;
 using API.Extensions;
 using AutoMapper;
 using Core.Entities;
-using Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,21 +12,23 @@ namespace API.Controllers
     [Authorize]
     public class UsersController : BaseApiController
     {
-        private readonly IMapper mapper;
-        private readonly IUnitOfWork unitOfWork;
-        private readonly UserManager<AppUser> userManager;
+        private readonly IMapper _mapper;
+        private readonly UserManager<AppUser> _userManager;
 
-        public UsersController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IMapper mapper)
+        public UsersController(UserManager<AppUser> userManager, IMapper mapper)
         {
-            this.unitOfWork = unitOfWork;
-            this.userManager = userManager;
-            this.mapper = mapper;
+            this._userManager = userManager;
+            this._mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers([FromQuery] string username)
         {
-            var users = await this.userManager.Users.ToListAsync();
+            var gender = (await this._userManager.FindByNameAsync(username)).Gender;
+
+            gender = gender == "male" ? "female" : "male";
+
+            var users = await this._userManager.Users.Where(u => u.Gender == gender).ToListAsync();
 
             return Ok(users);
         }
@@ -35,7 +36,7 @@ namespace API.Controllers
         [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult<MemberDto>> GetUser(string username)
         {
-            var user = await this.userManager.FindByNameAsync(username);
+            var user = await this._userManager.FindByNameAsync(username);
 
             return Ok(user);
         }
@@ -44,11 +45,11 @@ namespace API.Controllers
         public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
         {
 
-            var user = await this.userManager.FindByNameAsync(User.GetUsername());
+            var user = await this._userManager.FindByNameAsync(User.GetUsername());
 
-            mapper.Map(memberUpdateDto, user);
+            _mapper.Map(memberUpdateDto, user);
 
-            if ((await this.userManager.UpdateAsync(user)).Succeeded) return NoContent();
+            if ((await this._userManager.UpdateAsync(user)).Succeeded) return NoContent();
 
             return BadRequest("Failed to update user");
         }

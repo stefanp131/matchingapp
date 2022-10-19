@@ -6,38 +6,38 @@ namespace Infrastructure.Data
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly DataContext context;
-        private Hashtable repositories;
+        private readonly DataContext _context;
+        private Hashtable _repositories;
         public UnitOfWork(DataContext context)
         {
-            this.context = context;
+            this._context = context;
         }
 
         public async Task<int> Complete()
         {
-            return await context.SaveChangesAsync();
+            return await _context.SaveChangesAsync();
         }
 
         public void Dispose()
         {
-            context.Dispose();
+            _context.Dispose();
         }
 
         public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
         {
-            if (repositories == null) repositories = new Hashtable();
+            if (_repositories == null) _repositories = new Hashtable();
 
             var type = typeof(TEntity).Name;
 
-            if (!repositories.ContainsKey(type))
+            if (!_repositories.ContainsKey(type))
             {
                 var repositoryType = typeof(GenericRepository<>);
-                var repositoryInstance = Activator.CreateInstance(repositoryType.MakeGenericType(typeof(TEntity)), context);
+                var repositoryInstance = Activator.CreateInstance(repositoryType.MakeGenericType(typeof(TEntity)), _context);
 
-                repositories.Add(type, repositoryInstance);
+                _repositories.Add(type, repositoryInstance);
             }
 
-            return (IGenericRepository<TEntity>) repositories[type];
+            return (IGenericRepository<TEntity>) _repositories[type];
         }
     }
 }
